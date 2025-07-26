@@ -3,302 +3,212 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Weather Forecast</title>
+    <title>WeatherCast AI</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .weather-card {
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .bg-animate {
+            animation: gradientBG 15s ease infinite;
+            background-size: 400% 400%;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center min-h-screen p-4">
-    <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-md backdrop-blur-sm bg-white/80">
-        <h1 class="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-indigo-600 mb-4">
-            <i class="fas fa-cloud-sun mr-2"></i>AI Weather
-        </h1>
-        
-        <!-- Search Bar with AI Suggestions -->
-        <div class="relative mb-6">
-            <div class="flex items-center">
-                <input 
-                    type="text" 
-                    id="cityInput"
-                    placeholder="Ask about any location..." 
-                    class="w-full p-3 border-2 rounded-l-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    autocomplete="off"
-                >
-                <button 
-                    id="searchBtn"
-                    class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-r-xl hover:from-blue-600 hover:to-indigo-700 transition-all"
-                >
+<body class="min-h-screen bg-animate bg-gradient-to-br from-blue-400 via-purple-500 to-indigo-600 flex items-center justify-center p-4">
+    <div class="weather-card w-full max-w-md text-white p-8">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-3xl font-bold">WeatherCast <span class="text-yellow-300">AI</span></h1>
+                <p id="current-date" class="text-sm opacity-80">Loading date...</p>
+            </div>
+            <div class="bg-white/20 p-3 rounded-full">
+                <i class="fas fa-cloud-sun text-2xl"></i>
+            </div>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="relative mb-8">
+            <div class="flex">
+                <input type="text" id="city-input" placeholder="Search city..." 
+                    class="w-full bg-white/20 backdrop-blur-sm border-0 text-white placeholder-white/70 rounded-l-2xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-yellow-300">
+                <button id="search-btn" class="bg-yellow-400 hover:bg-yellow-300 text-gray-800 px-6 rounded-r-2xl font-medium transition-all">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
-            <div id="suggestions" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg"></div>
+            <div id="suggestions" class="hidden absolute z-10 w-full mt-1 bg-white/20 backdrop-blur-md rounded-xl overflow-hidden"></div>
         </div>
-        
+
         <!-- Current Weather -->
-        <div id="currentWeather" class="text-center hidden">
-            <div class="flex justify-between items-center mb-2">
-                <h2 id="cityName" class="text-xl font-semibold text-gray-700"></h2>
-                <span id="currentDate" class="text-gray-500"></span>
-            </div>
-            <div class="flex justify-center items-center">
-                <div class="text-center mr-6">
-                    <p id="currentTemp" class="text-5xl font-bold text-gray-800"></p>
-                    <p id="weatherDesc" class="text-gray-600 capitalize"></p>
+        <div id="current-weather" class="text-center mb-8">
+            <h2 id="city-name" class="text-2xl font-bold mb-1">--</h2>
+            <div class="flex justify-center items-center my-4">
+                <img id="weather-icon" src="https://openweathermap.org/img/wn/01d@2x.png" alt="Weather icon" class="w-24 h-24">
+                <div class="text-left ml-4">
+                    <p id="current-temp" class="text-5xl font-bold">--°</p>
+                    <p id="weather-desc" class="capitalize">--</p>
                 </div>
-                <img id="weatherIcon" src="" alt="Weather Icon" class="w-24 h-24">
             </div>
             
-            <!-- AI Summary -->
-            <div id="aiSummary" class="bg-blue-50 rounded-lg p-3 mt-3 text-sm text-left text-gray-700 italic">
-                <i class="fas fa-robot text-blue-500 mr-1"></i>
-                <span id="aiText">Loading AI insights...</span>
-            </div>
-            
-            <!-- Additional Info -->
+            <!-- Weather Stats -->
             <div class="grid grid-cols-3 gap-4 mt-6">
-                <div class="bg-gray-50 p-2 rounded-lg">
-                    <p class="text-gray-600"><i class="fas fa-tint mr-1"></i>Humidity</p>
-                    <p id="humidity" class="text-lg font-semibold"></p>
+                <div class="bg-white/10 p-3 rounded-xl">
+                    <p><i class="fas fa-tint mr-1"></i> Humidity</p>
+                    <p id="humidity" class="text-xl font-bold mt-1">--%</p>
                 </div>
-                <div class="bg-gray-50 p-2 rounded-lg">
-                    <p class="text-gray-600"><i class="fas fa-wind mr-1"></i>Wind</p>
-                    <p id="windSpeed" class="text-lg font-semibold"></p>
+                <div class="bg-white/10 p-3 rounded-xl">
+                    <p><i class="fas fa-wind mr-1"></i> Wind</p>
+                    <p id="wind-speed" class="text-xl font-bold mt-1">-- km/h</p>
                 </div>
-                <div class="bg-gray-50 p-2 rounded-lg">
-                    <p class="text-gray-600"><i class="fas fa-compress-alt mr-1"></i>Pressure</p>
-                    <p id="pressure" class="text-lg font-semibold"></p>
+                <div class="bg-white/10 p-3 rounded-xl">
+                    <p><i class="fas fa-temperature-low mr-1"></i> Feels</p>
+                    <p id="feels-like" class="text-xl font-bold mt-1">--°</p>
                 </div>
             </div>
         </div>
-        
+
+        <!-- AI Insights -->
+        <div id="ai-insights" class="bg-white/10 rounded-xl p-4 mb-6 hidden">
+            <div class="flex items-center mb-2">
+                <div class="bg-yellow-400 text-gray-800 w-8 h-8 rounded-full flex items-center justify-center mr-2">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <h3 class="font-bold">AI Insights</h3>
+            </div>
+            <p id="ai-text" class="text-sm">Loading weather analysis...</p>
+        </div>
+
         <!-- Forecast -->
-        <div id="forecast" class="mt-6 hidden">
-            <h3 class="text-lg font-semibold text-gray-700 mb-3"><i class="fas fa-calendar-alt mr-2"></i>5-Day Forecast</h3>
-            <div id="forecastContainer" class="space-y-3"></div>
+        <div id="forecast" class="hidden">
+            <h3 class="font-bold mb-3 flex items-center">
+                <i class="fas fa-calendar-alt mr-2"></i> 5-Day Forecast
+            </h3>
+            <div id="forecast-container" class="space-y-3"></div>
         </div>
-        
-        <!-- AI Features Button -->
-        <div class="mt-6 text-center">
-            <button id="aiFeaturesBtn" class="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-medium hover:shadow-lg transition-all hidden">
-                <i class="fas fa-magic mr-2"></i>More AI Insights
-            </button>
-        </div>
-    </div>
-    
-    <!-- Loading Spinner -->
-    <div id="loadingSpinner" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center hidden">
-        <div class="bg-white p-6 rounded-lg shadow-xl flex items-center">
-            <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mr-4"></div>
-            <p class="text-gray-700">Analyzing weather data with AI...</p>
+
+        <!-- Loading Spinner -->
+        <div id="loading-spinner" class="fixed inset-0 bg-black/50 flex items-center justify-center hidden">
+            <div class="bg-white text-gray-800 p-6 rounded-xl flex items-center shadow-xl">
+                <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500 mr-4"></div>
+                <p>Fetching weather data...</p>
+            </div>
         </div>
     </div>
 
     <script>
+        // Mock Data - Replace with real API calls later
+        const mockWeatherData = {
+            city: "London",
+            country: "UK",
+            temp: 22,
+            feels_like: 20,
+            description: "Partly cloudy",
+            icon: "03d",
+            humidity: 65,
+            wind_speed: 12,
+            forecast: [
+                { day: "Mon", temp_max: 23, temp_min: 18, icon: "01d" },
+                { day: "Tue", temp_max: 21, temp_min: 16, icon: "02d" },
+                { day: "Wed", temp_max: 19, temp_min: 14, icon: "09d" },
+                { day: "Thu", temp_max: 20, temp_min: 15, icon: "50d" },
+                { day: "Fri", temp_max: 22, temp_min: 17, icon: "10d" }
+            ]
+        };
+
         // DOM Elements
-        const cityInput = document.getElementById('cityInput');
-        const searchBtn = document.getElementById('searchBtn');
-        const suggestions = document.getElementById('suggestions');
-        const currentWeather = document.getElementById('currentWeather');
+        const cityInput = document.getElementById('city-input');
+        const searchBtn = document.getElementById('search-btn');
+        const currentWeather = document.getElementById('current-weather');
         const forecast = document.getElementById('forecast');
-        const loadingSpinner = document.getElementById('loadingSpinner');
-        const aiFeaturesBtn = document.getElementById('aiFeaturesBtn');
-        
-        // Weather API Key (in a real app, this would be secured on the backend)
-        const API_KEY = 'YOUR_OPENWEATHERMAP_API_KEY';
-        
-        // Event Listeners
-        searchBtn.addEventListener('click', fetchWeather);
-        cityInput.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') fetchWeather();
-            else getCitySuggestions();
+        const aiInsights = document.getElementById('ai-insights');
+        const loadingSpinner = document.getElementById('loading-spinner');
+
+        // Initialize with mock data
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDate();
+            displayWeather(mockWeatherData);
         });
-        aiFeaturesBtn.addEventListener('click', showAIInsights);
-        
-        // Fetch Weather Data
-        async function fetchWeather() {
+
+        // Update current date
+        function updateDate() {
+            const now = new Date();
+            const options = { weekday: 'long', month: 'short', day: 'numeric' };
+            document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
+        }
+
+        // Display weather data
+        function displayWeather(data) {
+            // Current weather
+            document.getElementById('city-name').textContent = `${data.city}, ${data.country}`;
+            document.getElementById('current-temp').textContent = `${data.temp}°`;
+            document.getElementById('weather-desc').textContent = data.description;
+            document.getElementById('humidity').textContent = `${data.humidity}%`;
+            document.getElementById('wind-speed').textContent = `${data.wind_speed} km/h`;
+            document.getElementById('feels-like').textContent = `${data.feels_like}°`;
+            document.getElementById('weather-icon').src = `https://openweathermap.org/img/wn/${data.icon}@2x.png`;
+
+            // Forecast
+            const forecastContainer = document.getElementById('forecast-container');
+            forecastContainer.innerHTML = '';
+            data.forecast.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'flex items-center justify-between bg-white/10 p-3 rounded-xl';
+                dayElement.innerHTML = `
+                    <div class="text-left">
+                        <p class="font-medium">${day.day}</p>
+                    </div>
+                    <img src="https://openweathermap.org/img/wn/${day.icon}.png" alt="Weather icon" class="w-10 h-10">
+                    <div class="flex space-x-3">
+                        <span class="font-bold">${day.temp_max}°</span>
+                        <span class="opacity-70">${day.temp_min}°</span>
+                    </div>
+                `;
+                forecastContainer.appendChild(dayElement);
+            });
+
+            // AI Insights (mock)
+            document.getElementById('ai-text').textContent = 
+                `Currently ${data.description.toLowerCase()} with temperatures around ${data.temp}°C. ` +
+                `The humidity is ${data.humidity}%, making it feel like ${data.feels_like}°C. ` +
+                `Expect similar conditions for the next few days.`;
+
+            // Show all sections
+            currentWeather.classList.remove('hidden');
+            forecast.classList.remove('hidden');
+            aiInsights.classList.remove('hidden');
+        }
+
+        // Mock search function
+        searchBtn.addEventListener('click', () => {
             const city = cityInput.value.trim();
             if (!city) return;
             
-            showLoading(true);
+            loadingSpinner.classList.remove('hidden');
             
-            try {
-                // Fetch current weather
-                const currentResponse = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`);
-                const currentData = await currentResponse.json();
-                
-                if (currentData.cod !== 200) {
-                    throw new Error(currentData.message || 'City not found');
-                }
-                
-                // Fetch forecast
-                const forecastResponse = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${API_KEY}`);
-                const forecastData = await forecastResponse.json();
-                
-                // Display data
-                displayCurrentWeather(currentData);
-                displayForecast(forecastData);
-                generateAISummary(currentData, forecastData);
-                
-                // Show elements
-                currentWeather.classList.remove('hidden');
-                forecast.classList.remove('hidden');
-                aiFeaturesBtn.classList.remove('hidden');
-                
-            } catch (error) {
-                alert(`Error: ${error.message}`);
-            } finally {
-                showLoading(false);
-            }
-        }
-        
-        // Display Current Weather
-        function displayCurrentWeather(data) {
-            document.getElementById('cityName').textContent = `${data.name}, ${data.sys.country}`;
-            document.getElementById('currentTemp').textContent = `${Math.round(data.main.temp)}°C`;
-            document.getElementById('weatherDesc').textContent = data.weather[0].description;
-            document.getElementById('humidity').textContent = `${data.main.humidity}%`;
-            document.getElementById('windSpeed').textContent = `${Math.round(data.wind.speed * 3.6)} km/h`;
-            document.getElementById('pressure').textContent = `${data.main.pressure} hPa`;
-            
-            // Set weather icon
-            const iconCode = data.weather[0].icon;
-            document.getElementById('weatherIcon').src = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-            
-            // Set current date
-            const now = new Date();
-            document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', { 
-                weekday: 'long', 
-                month: 'short', 
-                day: 'numeric' 
-            });
-        }
-        
-        // Display Forecast
-        function displayForecast(data) {
-            const forecastContainer = document.getElementById('forecastContainer');
-            forecastContainer.innerHTML = '';
-            
-            // Get daily forecasts (API returns 3-hour intervals, we'll take midday for each day)
-            const dailyForecasts = [];
-            for (let i = 4; i < data.list.length; i += 8) {
-                dailyForecasts.push(data.list[i]);
-            }
-            
-            dailyForecasts.forEach(day => {
-                const date = new Date(day.dt * 1000);
-                const dayElement = document.createElement('div');
-                dayElement.className = 'flex items-center justify-between bg-gray-50 p-3 rounded-lg';
-                
-                dayElement.innerHTML = `
-                    <div class="text-left">
-                        <p class="font-medium">${date.toLocaleDateString('en-US', { weekday: 'short' })}</p>
-                        <p class="text-sm text-gray-500">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
-                    </div>
-                    <img src="https://openweathermap.org/img/wn/${day.weather[0].icon}.png" alt="${day.weather[0].description}" class="w-10 h-10">
-                    <div class="flex space-x-3">
-                        <span class="font-semibold">${Math.round(day.main.temp_max)}°</span>
-                        <span class="text-gray-500">${Math.round(day.main.temp_min)}°</span>
-                    </div>
-                `;
-                
-                forecastContainer.appendChild(dayElement);
-            });
-        }
-        
-        // Generate AI Summary (simulated - in real app you'd call an AI API)
-        function generateAISummary(currentData, forecastData) {
-            const conditions = currentData.weather[0].description;
-            const temp = Math.round(currentData.main.temp);
-            const wind = Math.round(currentData.wind.speed * 3.6);
-            const humidity = currentData.main.humidity;
-            
-            // Get tomorrow's forecast
-            const tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            const tomorrowForecast = forecastData.list.find(item => {
-                const date = new Date(item.dt * 1000);
-                return date.getDate() === tomorrow.getDate();
-            });
-            
-            // Simulate AI analysis
-            let summary = `Currently ${conditions} with temperatures around ${temp}°C. `;
-            
-            if (wind > 20) {
-                summary += `It's quite windy at ${wind} km/h, so you might want to secure loose items. `;
-            } else if (wind > 10) {
-                summary += `A moderate breeze of ${wind} km/h is present. `;
-            }
-            
-            if (humidity > 70) {
-                summary += `The humidity is high at ${humidity}%, making it feel warmer than it actually is. `;
-            } else if (humidity < 30) {
-                summary += `The air is quite dry with ${humidity}% humidity. `;
-            }
-            
-            if (tomorrowForecast) {
-                const tomorrowTemp = Math.round(tomorrowForecast.main.temp);
-                const tomorrowConditions = tomorrowForecast.weather[0].description;
-                summary += `Tomorrow expect ${tomorrowConditions} with temperatures around ${tomorrowTemp}°C.`;
-            }
-            
-            document.getElementById('aiText').textContent = summary;
-        }
-        
-        // Show AI Insights (simulated advanced features)
-        function showAIInsights() {
-            alert("In a full implementation, this would show:\n\n" +
-                  "1. Personalized clothing recommendations\n" + 
-                  "2. Activity suggestions based on weather\n" +
-                  "3. Health tips (UV index, air quality)\n" +
-                  "4. Historical weather comparisons\n" +
-                  "5. Predictive insights for the coming week");
-        }
-        
-        // City Suggestions (simulated)
-        function getCitySuggestions() {
-            // In a real app, you'd call an API for city suggestions
-            // This is a simplified version
-            const popularCities = [
-                "London, UK", "New York, US", "Tokyo, Japan", 
-                "Paris, France", "Sydney, Australia", "Berlin, Germany"
-            ];
-            
-            const input = cityInput.value.toLowerCase();
-            if (input.length < 2) {
-                suggestions.classList.add('hidden');
-                return;
-            }
-            
-            const filtered = popularCities.filter(city => 
-                city.toLowerCase().includes(input)
-            );
-            
-            if (filtered.length > 0) {
-                suggestions.innerHTML = filtered.map(city => 
-                    `<div class="p-2 hover:bg-gray-100 cursor-pointer">${city}</div>`
-                ).join('');
-                suggestions.classList.remove('hidden');
-                
-                // Add click handlers to suggestions
-                document.querySelectorAll('#suggestions div').forEach(item => {
-                    item.addEventListener('click', () => {
-                        cityInput.value = item.textContent;
-                        suggestions.classList.add('hidden');
-                        fetchWeather();
-                    });
-                });
-            } else {
-                suggestions.classList.add('hidden');
-            }
-        }
-        
-        // Loading State
-        function showLoading(show) {
-            if (show) {
-                loadingSpinner.classList.remove('hidden');
-            } else {
+            // Simulate API delay
+            setTimeout(() => {
+                // Update mock data with new city name
+                mockWeatherData.city = city;
+                displayWeather(mockWeatherData);
                 loadingSpinner.classList.add('hidden');
-            }
-        }
+            }, 1000);
+        });
+
+        // Allow Enter key to search
+        cityInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') searchBtn.click();
+        });
     </script>
 </body>
 </html>
