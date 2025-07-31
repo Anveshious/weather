@@ -47,14 +47,13 @@
                     <i class="fas fa-search"></i>
                 </button>
             </div>
-            <div id="suggestions" class="hidden absolute z-10 w-full mt-1 bg-white/20 backdrop-blur-md rounded-xl overflow-hidden"></div>
         </div>
 
-        <!-- Current Weather -->
-        <div id="current-weather" class="text-center mb-8">
+        <!-- Current Weather (Initially Hidden) -->
+        <div id="current-weather" class="text-center mb-8 hidden">
             <h2 id="city-name" class="text-2xl font-bold mb-1">--</h2>
             <div class="flex justify-center items-center my-4">
-                <img id="weather-icon" src="https://openweathermap.org/img/wn/01d@2x.png" alt="Weather icon" class="w-24 h-24">
+                <img id="weather-icon" src="" alt="Weather icon" class="w-24 h-24">
                 <div class="text-left ml-4">
                     <p id="current-temp" class="text-5xl font-bold">--°</p>
                     <p id="weather-desc" class="capitalize">--</p>
@@ -78,7 +77,7 @@
             </div>
         </div>
 
-        <!-- AI Insights -->
+        <!-- AI Insights (Initially Hidden) -->
         <div id="ai-insights" class="bg-white/10 rounded-xl p-4 mb-6 hidden">
             <div class="flex items-center mb-2">
                 <div class="bg-yellow-400 text-gray-800 w-8 h-8 rounded-full flex items-center justify-center mr-2">
@@ -86,10 +85,10 @@
                 </div>
                 <h3 class="font-bold">AI Insights</h3>
             </div>
-            <p id="ai-text" class="text-sm">Loading weather analysis...</p>
+            <p id="ai-text" class="text-sm">Search for a city to get AI-powered weather insights</p>
         </div>
 
-        <!-- Forecast -->
+        <!-- Forecast (Initially Hidden) -->
         <div id="forecast" class="hidden">
             <h3 class="font-bold mb-3 flex items-center">
                 <i class="fas fa-calendar-alt mr-2"></i> 5-Day Forecast
@@ -107,25 +106,6 @@
     </div>
 
     <script>
-        // Mock Data - Replace with real API calls later
-        const mockWeatherData = {
-            city: "London",
-            country: "UK",
-            temp: 22,
-            feels_like: 20,
-            description: "Partly cloudy",
-            icon: "03d",
-            humidity: 65,
-            wind_speed: 12,
-            forecast: [
-                { day: "Mon", temp_max: 23, temp_min: 18, icon: "01d" },
-                { day: "Tue", temp_max: 21, temp_min: 16, icon: "02d" },
-                { day: "Wed", temp_max: 19, temp_min: 14, icon: "09d" },
-                { day: "Thu", temp_max: 20, temp_min: 15, icon: "50d" },
-                { day: "Fri", temp_max: 22, temp_min: 17, icon: "10d" }
-            ]
-        };
-
         // DOM Elements
         const cityInput = document.getElementById('city-input');
         const searchBtn = document.getElementById('search-btn');
@@ -134,76 +114,114 @@
         const aiInsights = document.getElementById('ai-insights');
         const loadingSpinner = document.getElementById('loading-spinner');
 
-        // Initialize with mock data
-        document.addEventListener('DOMContentLoaded', () => {
-            updateDate();
-            displayWeather(mockWeatherData);
-        });
+        // Update current date on load
+        document.addEventListener('DOMContentLoaded', updateDate);
 
-        // Update current date
         function updateDate() {
             const now = new Date();
             const options = { weekday: 'long', month: 'short', day: 'numeric' };
             document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', options);
         }
 
-        // Display weather data
-        function displayWeather(data) {
-            // Current weather
-            document.getElementById('city-name').textContent = `${data.city}, ${data.country}`;
-            document.getElementById('current-temp').textContent = `${data.temp}°`;
-            document.getElementById('weather-desc').textContent = data.description;
-            document.getElementById('humidity').textContent = `${data.humidity}%`;
-            document.getElementById('wind-speed').textContent = `${data.wind_speed} km/h`;
-            document.getElementById('feels-like').textContent = `${data.feels_like}°`;
-            document.getElementById('weather-icon').src = `https://openweathermap.org/img/wn/${data.icon}@2x.png`;
+        // Fetch real weather data
+        searchBtn.addEventListener('click', async () => {
+            const city = cityInput.value.trim();
+            if (!city) return;
+            
+            showLoading(true);
+            clearWeatherData();
+            
+            try {
+                // Replace with your actual API key
+                const API_KEY = '9a9797e282ed69096475aac373915d2c';
+                
+                // Fetch current weather
+                const currentResponse = await fetch(
+                    `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${API_KEY}`
+                );
+                const currentData = await currentResponse.json();
+                
+                // Fetch 5-day forecast
+                const forecastResponse = await fetch(
+                    `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${API_KEY}`
+                );
+                const forecastData = await forecastResponse.json();
+                
+                // Display the data
+                displayWeather(currentData, forecastData);
+                
+            } catch (error) {
+                showError(error.message || "Failed to fetch weather data");
+            } finally {
+                showLoading(false);
+            }
+        });
 
-            // Forecast
+        function displayWeather(currentData, forecastData) {
+            // Current weather
+            document.getElementById('city-name').textContent = `${currentData.name}, ${currentData.sys.country}`;
+            document.getElementById('current-temp').textContent = `${Math.round(currentData.main.temp)}°C`;
+            document.getElementById('weather-desc').textContent = currentData.weather[0].description;
+            document.getElementById('humidity').textContent = `${currentData.main.humidity}%`;
+            document.getElementById('wind-speed').textContent = `${Math.round(currentData.wind.speed * 3.6)} km/h`;
+            document.getElementById('feels-like').textContent = `${Math.round(currentData.main.feels_like)}°C`;
+            document.getElementById('weather-icon').src = `https://openweathermap.org/img/wn/${currentData.weather[0].icon}@2x.png`;
+
+            // Forecast (5-day)
             const forecastContainer = document.getElementById('forecast-container');
             forecastContainer.innerHTML = '';
-            data.forecast.forEach(day => {
+            
+            // Show only one forecast per day (API returns data every 3 hours)
+            for (let i = 0; i < forecastData.list.length; i += 8) {
+                const day = forecastData.list[i];
+                const date = new Date(day.dt * 1000);
+                
                 const dayElement = document.createElement('div');
                 dayElement.className = 'flex items-center justify-between bg-white/10 p-3 rounded-xl';
                 dayElement.innerHTML = `
                     <div class="text-left">
-                        <p class="font-medium">${day.day}</p>
+                        <p class="font-medium">${date.toLocaleDateString('en-US', { weekday: 'short' })}</p>
                     </div>
-                    <img src="https://openweathermap.org/img/wn/${day.icon}.png" alt="Weather icon" class="w-10 h-10">
+                    <img src="https://openweathermap.org/img/wn/${day.weather[0].icon}.png" class="w-10 h-10">
                     <div class="flex space-x-3">
-                        <span class="font-bold">${day.temp_max}°</span>
-                        <span class="opacity-70">${day.temp_min}°</span>
+                        <span class="font-bold">${Math.round(day.main.temp_max)}°</span>
+                        <span class="opacity-70">${Math.round(day.main.temp_min)}°</span>
                     </div>
                 `;
                 forecastContainer.appendChild(dayElement);
-            });
+            }
 
-            // AI Insights (mock)
-            document.getElementById('ai-text').textContent = 
-                `Currently ${data.description.toLowerCase()} with temperatures around ${data.temp}°C. ` +
-                `The humidity is ${data.humidity}%, making it feel like ${data.feels_like}°C. ` +
-                `Expect similar conditions for the next few days.`;
+            // AI Insights (basic version - replace with OpenAI API if needed)
+            document.getElementById('ai-text').textContent = generateBasicInsights(currentData);
 
             // Show all sections
             currentWeather.classList.remove('hidden');
-            forecast.classList.remove('hidden');
             aiInsights.classList.remove('hidden');
+            forecast.classList.remove('hidden');
         }
 
-        // Mock search function
-        searchBtn.addEventListener('click', () => {
-            const city = cityInput.value.trim();
-            if (!city) return;
-            
-            loadingSpinner.classList.remove('hidden');
-            
-            // Simulate API delay
-            setTimeout(() => {
-                // Update mock data with new city name
-                mockWeatherData.city = city;
-                displayWeather(mockWeatherData);
-                loadingSpinner.classList.add('hidden');
-            }, 1000);
-        });
+        function generateBasicInsights(data) {
+            return `Currently ${data.weather[0].description} with temperatures around ${Math.round(data.main.temp)}°C. 
+                    Wind speed: ${Math.round(data.wind.speed * 3.6)} km/h. 
+                    Humidity: ${data.main.humidity}%.`;
+        }
+
+        function clearWeatherData() {
+            currentWeather.classList.add('hidden');
+            aiInsights.classList.add('hidden');
+            forecast.classList.add('hidden');
+        }
+
+        function showLoading(show) {
+            if (show) loadingSpinner.classList.remove('hidden');
+            else loadingSpinner.classList.add('hidden');
+        }
+
+        function showError(message) {
+            aiInsights.classList.remove('hidden');
+            document.getElementById('ai-text').textContent = `Error: ${message}`;
+            document.getElementById('ai-text').classList.add('text-red-300');
+        }
 
         // Allow Enter key to search
         cityInput.addEventListener('keypress', (e) => {
