@@ -1,0 +1,28 @@
+/* Chatbot Styles */
+#chat-messages {
+    scrollbar-width: thin;
+    scrollbar-color: #c7d2fe #f5f3ff;
+}
+
+#chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+#chat-messages::-webkit-scrollbar-track {
+    background: #f5f3ff;
+}
+
+#chat-messages::-webkit-scrollbar-thumb {
+    background-color: #c7d2fe;
+    border-radius: 3px;
+}
+
+/* Chatbot animations */
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+.animate-bounce {
+    animation: bounce 1s infinite;
+}
